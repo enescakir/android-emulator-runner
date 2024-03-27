@@ -1,0 +1,36 @@
+name: Test Android Hardware Acceleration on Ubicloud
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  with-kvm:
+    runs-on: ubicloud-standard-8
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: enable KVM for linux runners
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          script: ./gradlew connectedCheck
+
+  without-kvm:
+    runs-on: ubicloud-standard-8
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: run tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          script: ./gradlew connectedCheck
